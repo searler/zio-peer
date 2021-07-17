@@ -1,18 +1,10 @@
 package searler.zio_peer
 
 import zio.UIO
-import zio.stream.{SubscriptionRef, UStream}
+import zio.stream.SubscriptionRef
 
-trait Tracker[A] {
-  type Finalizer = () => UIO[Unit]
-
+trait Tracker[A] extends Monitor[A] {
   def created(addr: Option[A], finalizer: Finalizer): UIO[Option[A]]
-
-  def destroyed(addr: A, finalizer: Finalizer): UIO[Unit]
-
-  def get: UIO[Set[A]]
-
-  def changes: UStream[Set[A]]
 }
 
 object Tracker {
@@ -24,24 +16,16 @@ object Tracker {
 
   def dropOld[A]: UIO[Tracker[A]] = policy(_ => true)
 
-  private final class Policy[A](private val state: SubscriptionRef[Map[A, Finalizer]], private val retainNew: A => Boolean) extends Tracker[A] {
-    def destroyed(addr: A, finalizer: Finalizer): UIO[Unit] = state.ref.update(current => current.get(addr) match {
-      case Some(c) if finalizer == c => UIO(current - addr)
-      case _ => UIO(current)
-    }) *> finalizer()
-
-    def changes = state.changes.map(_.keys.toSet)
-
-    def get: UIO[Set[A]] = state.ref.get.map(_.keys.toSet)
+  private final class Policy[A](protected val state: SubscriptionRef[Map[A, Finalizer]], private val retainNew: A => Boolean) extends Monitor.Base[A] with Tracker[A] {
 
     def created(addr: Option[A], finalizer: Finalizer): UIO[Option[A]] = addr match {
       case None => UIO(addr)
       case Some(a) => state.ref.modify { current =>
         current.get(a) match {
           case None => UIO(addr, current + (a -> finalizer))
-          case Some(c) =>
+          case Some(existing) =>
             if (retainNew(a))
-              c() *> UIO(addr -> (current + (a -> finalizer)))
+              existing() *> UIO(addr -> (current + (a -> finalizer)))
             else
               finalizer() *> UIO((None, current))
         }

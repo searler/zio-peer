@@ -6,7 +6,7 @@ scalaVersion := "2.13.1"
 
 name := "zio-peer"
 organization := "searler"
-version := "0.1"
+version := "0.2"
 
 
 val zio_version ="1.0.9"
@@ -17,8 +17,15 @@ libraryDependencies += "dev.zio" %% "zio-test"          % zio_version % "test"
 libraryDependencies +=  "dev.zio" %% "zio-test-sbt"      % zio_version % "test"
 libraryDependencies += "dev.zio" %% "zio-json" % "0.1.5"
 
+libraryDependencies += "searler" %% "zio-tcp" % "0.2"
+
 testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 
-resolvers += "LocalFileSystem" at "file:///${user.home}/.ivy2/local/"
+githubOwner := "searler"
+githubRepository := "zio-peer"
 
-libraryDependencies += "searler" %% "zio-tcp" % "0.1"
+githubTokenSource := TokenSource.GitConfig("github.token")
+
+resolvers += Resolver.githubPackages("searler", "zio-tcp")
+
+

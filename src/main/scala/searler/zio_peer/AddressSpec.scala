@@ -1,7 +1,16 @@
 package searler.zio_peer
 
-trait AddressSpec[-E] {
+sealed trait RoutingSpec[-E]
+
+case object  SELF extends RoutingSpec[Any]
+case object  MASTER extends RoutingSpec[Any]
+
+trait AddressSpec[-E] extends RoutingSpec [E]{
   def matches(address: E): Boolean
+}
+
+case object ALL_SELF extends AddressSpec[Any] {
+  override def matches(address: Any): Boolean = true
 }
 
 case object ALL extends AddressSpec[Any] {
