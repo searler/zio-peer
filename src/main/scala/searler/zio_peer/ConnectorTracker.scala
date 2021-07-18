@@ -9,7 +9,6 @@ sealed trait ConnectorTracker[A] extends Tracker[A] {
 }
 
 object ConnectorTracker {
-  type Finalizer = () => UIO[Unit]
 
   def apply[A]: UIO[ConnectorTracker[A]] = SubscriptionRef.make(Map.empty[A, Channel]).map(new Recorder(_))
 
@@ -20,7 +19,7 @@ object ConnectorTracker {
         current.get(addr) match {
           case None => UIO(current + (addr -> channel))
           case Some(c) =>
-            UIO(current + (addr -> channel))
+           c.close() *> UIO(current + (addr -> channel))
         }
       }
   }
