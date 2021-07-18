@@ -4,12 +4,12 @@ import searler.zio_tcp.TCP.Channel
 import zio._
 import zio.stream.{ZStream, ZTransducer}
 
-object Base {
+private [zio_peer] object  BaseServer {
 
   def apply[A, T, S, U](input: ZTransducer[Any, Nothing, Byte, S],
                         output: U => Chunk[Byte],
-                        tracker: Monitor[A],
-                        hub: ZHub[Any, Any, Nothing, Nothing, (AddressSpec[A], T), (AddressSpec[A], U)],
+                        tracker: Tracker[A],
+                        hub: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
                         processor: Enqueue[(A, S)]): (A, Channel) => ZIO[Any, Nothing, Unit] = (addr: A, c: Channel) => {
     def reader(addr: A, promise: Promise[Nothing, Unit], c: Channel): UIO[Unit] =
       (for {
@@ -32,6 +32,6 @@ object Base {
       promise <- Promise.make[Nothing, Unit]
       _ <- writer(addr, promise, c).fork
       _ <- reader(addr, promise, c)
-    } yield ()).ensuring(tracker.destroyed(addr, c.close))
+    } yield ()).ensuring(tracker.destroyed(addr, c))
   }
 }

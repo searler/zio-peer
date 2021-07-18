@@ -6,7 +6,7 @@ scalaVersion := "2.13.1"
 
 name := "zio-peer"
 organization := "searler"
-version := "0.2"
+version := "0.3"
 
 
 val zio_version ="1.0.9"

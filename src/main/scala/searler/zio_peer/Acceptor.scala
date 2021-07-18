@@ -14,10 +14,10 @@ object Acceptor {
                         lookup: SocketAddress => Option[A],
                         input: ZTransducer[Any, Nothing, Byte, S],
                         output: U => Chunk[Byte],
-                        exclusive: Tracker[A],
-                        hub: ZHub[Any, Any, Nothing, Nothing, (AddressSpec[A], T), (AddressSpec[A], U)],
+                        tracker: AcceptorTracker[A],
+                        hub: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
                         processor: Enqueue[(A, S)]): ZIO[Blocking, Throwable, Unit] = {
-    val base = Base(input, output, exclusive, hub, processor)
+    val base = BaseServer(input, output, tracker, hub, processor)
 
     for {
       _ <- TCP.fromSocketServer(port)
@@ -25,7 +25,7 @@ object Acceptor {
           c =>
             (for {
               looked <- c.remoteAddress.map(lookup)
-              addr <- exclusive.created(looked, c.close)
+              addr <- tracker.created(looked, c)
               _ <- base(addr.get, c).when(addr.isDefined)
             }
             yield ()).ensuring(c.close())

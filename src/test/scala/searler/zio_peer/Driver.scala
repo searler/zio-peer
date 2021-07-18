@@ -25,7 +25,7 @@ object Driver extends App {
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
 
-    def process(pair: (InetAddress, Request)): (AddressSpec[InetAddress], Response) = pair match {
+    def process(pair: (InetAddress, Request)): (Routing[InetAddress], Response) = pair match {
       case (addr: InetAddress, nr: NameRequest) => (ALL, NameResponse(nr.name))
       case _ => (ALL, NameResponse("----"))
     }
@@ -33,8 +33,8 @@ object Driver extends App {
     val program = for {
 
       responseHub <-
-        ZHub.sliding[(AddressSpec[InetAddress], String)](20).map(_
-          .contramap((resp: (AddressSpec[InetAddress], Response)) => (resp._1, resp._2.toJson)))
+        ZHub.sliding[(Routing[InetAddress], String)](20).map(_
+          .contramap((resp: (Routing[InetAddress], Response)) => (resp._1, resp._2.toJson)))
 
       requestHub <- ZHub.sliding[(InetAddress, String)](20).map(_
         .map(req => (req._1, req._2.fromJson[Request]))
@@ -43,7 +43,7 @@ object Driver extends App {
 
       _ <- ZStream.fromHub(requestHub).map(process).run(ZSink.fromHub(responseHub)).fork
 
-      ex <- Tracker.dropOld[InetAddress]
+      ex <- AcceptorTracker.dropOld[InetAddress]
       _ <- ex.changes.run(ZSink.foreach(keys => console.putStrLn(keys.toString()))).fork
 
       server <- Acceptor[InetAddress, Response, String, String](8886, 200,
