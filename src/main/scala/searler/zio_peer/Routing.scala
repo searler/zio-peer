@@ -1,13 +1,8 @@
 package searler.zio_peer
 
 
-
 trait Routing[-E] {
   def matches(address: E): Boolean
-}
-
-case object ALL_SELF extends Routing[Any] {
-  override def matches(address: Any): Boolean = true
 }
 
 case object ALL extends Routing[Any] {
