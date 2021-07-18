@@ -15,7 +15,6 @@ libraryDependencies += "dev.zio" %% "zio" % zio_version
 libraryDependencies += "dev.zio" %% "zio-streams" % zio_version
 libraryDependencies += "dev.zio" %% "zio-test"          % zio_version % "test"
 libraryDependencies +=  "dev.zio" %% "zio-test-sbt"      % zio_version % "test"
-libraryDependencies += "dev.zio" %% "zio-json" % "0.1.5"
 
 libraryDependencies += "searler" %% "zio-tcp" % "0.2"
 
