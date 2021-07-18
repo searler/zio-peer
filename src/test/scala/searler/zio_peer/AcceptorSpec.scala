@@ -11,7 +11,7 @@ import java.net.{InetAddress, InetSocketAddress}
 object AcceptorSpec extends DefaultRunnableSpec {
   override def spec = suite("acceptor")(
 
-    testM("onet") {
+    testM("one") {
 
       for {
         tracker <- AcceptorTracker.dropOld[InetAddress]
