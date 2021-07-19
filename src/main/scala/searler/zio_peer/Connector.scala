@@ -16,7 +16,7 @@ object Connector {
                            reconnector: Schedule[Any, Any, C],
                            initial: Iterable[S] = Seq.empty)
   = {
-    val base = BaseServer(input, output, tracker, hub, processor)
+    val base = BaseServer(input, output, tracker, hub, processor, initial)
 
     for {
       _ <- ZStream.fromIterable(acceptors).mapMParUnordered(acceptors.size) {

@@ -20,9 +20,11 @@ object ConnectorSpec extends DefaultRunnableSpec {
 
         inHub <- ZHub.sliding[(String, String)](20)
 
-        inStream = ZStream.fromHub(inHub)
 
-        instreamFork <- inStream.runHead.fork
+        gatherResult <- ZStream.fromHub(inHub).filter(_._2 != "INITIAL").runHead.fork
+
+        // wait for connection to server
+        initComplete <- ZStream.fromHub(inHub).filter(_._2 == "INITIAL").runHead.fork
 
         server <- runServer().fork
 
@@ -33,16 +35,17 @@ object ConnectorSpec extends DefaultRunnableSpec {
           tracker,
           outHub,
           inHub.toQueue,
-          Schedule.forever
+          Schedule.forever,
+          Seq("INITIAL")
         ).fork
 
-
         // wait for connection to server
-        _ <- tstream.runHead
+        _ <- initComplete.join
+
 
         _ <- outHub.publish(ALL -> "command")
 
-        result <- instreamFork.join
+        result <- gatherResult.join
 
         _ <- connector.interrupt
         _ <- server.interrupt

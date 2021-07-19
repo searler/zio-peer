@@ -16,8 +16,9 @@ object Acceptor {
                         output: U => Chunk[Byte],
                         tracker: AcceptorTracker[A],
                         hub: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
-                        processor: Enqueue[(A, S)]): ZIO[Blocking, Throwable, Unit] = {
-    val base = BaseServer(input, output, tracker, hub, processor)
+                        processor: Enqueue[(A, S)],
+                        initial: Iterable[S] = Seq.empty): ZIO[Blocking, Throwable, Unit] = {
+    val base = BaseServer(input, output, tracker, hub, processor, initial)
 
     for {
       _ <- TCP.fromSocketServer(port, noDelay = true)

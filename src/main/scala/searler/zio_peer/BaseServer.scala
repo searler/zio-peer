@@ -10,11 +10,12 @@ private[zio_peer] object BaseServer {
                         output: U => Chunk[Byte],
                         tracker: Tracker[A],
                         hub: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
-                        processor: Enqueue[(A, S)]): (A, Channel) => ZIO[Any, Nothing, Unit] = (addr: A, c: Channel) => {
+                        processor: Enqueue[(A, S)],
+                        initial: Iterable[S]): (A, Channel) => ZIO[Any, Nothing, Unit] = (addr: A, c: Channel) => {
     def reader(addr: A, promise: Promise[Nothing, Unit], c: Channel): UIO[Unit] =
       (for {
         _ <- promise.await
-        result <- c.read.transduce(input)
+        result <- (ZStream.fromIterable(initial) ++ c.read.transduce(input))
           .foreach(line => processor.offer(addr, line)).ensuring(c.close())
       }
       yield result).catchAll(_ => c.close())
