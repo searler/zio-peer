@@ -23,7 +23,8 @@ object AcceptorSpec extends DefaultRunnableSpec {
 
         _ <- ZStream.fromHub(requestHub).map(p => ALL -> (p._2.toUpperCase)).run(ZSink.fromHub(responseHub)).fork
 
-        server <- Acceptor[InetAddress, String, String, String](8886, 20,
+        server <- Acceptor[InetAddress, String, String, String](TCP.fromSocketServer(8886, noDelay = true),
+          20,
           sa => Option(sa.asInstanceOf[InetSocketAddress].getAddress),
           Transducer.utf8Decode,
           str => Chunk.fromArray(str.getBytes("UTF8")),

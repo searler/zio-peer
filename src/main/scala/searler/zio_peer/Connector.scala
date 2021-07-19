@@ -1,13 +1,14 @@
 package searler.zio_peer
 
-import searler.zio_tcp.TCP
+import searler.zio_tcp.TCP.Channel
+import zio.blocking.Blocking
 import zio.stream.{ZStream, ZTransducer}
-import zio.{Chunk, Enqueue, Schedule, ZHub}
+import zio.{Chunk, Enqueue, Schedule, ZHub, ZIO}
 
 object Connector {
 
   def apply[A, T, S, U, C](acceptors: Set[A],
-                           lookup: A => (Int, String),
+                           builder: A => ZIO[Blocking, Throwable, Channel],
                            input: ZTransducer[Any, Nothing, Byte, S],
                            output: U => Chunk[Byte],
                            tracker: ConnectorTracker[A],
@@ -21,9 +22,8 @@ object Connector {
     for {
       _ <- ZStream.fromIterable(acceptors).mapMParUnordered(acceptors.size) {
         addr => {
-          val addrPair = lookup(addr)
           (for {
-            c <- TCP.fromSocketClient(addrPair._1, addrPair._2, noDelay = true)
+            c <- builder(addr)
             _ <- tracker.created(addr, c)
             _ <- base(addr, c)
           } yield ()).repeat(reconnector).retry(reconnector).either

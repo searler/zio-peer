@@ -29,7 +29,7 @@ object ConnectorSpec extends DefaultRunnableSpec {
         server <- runServer().fork
 
         connector <- Connector[String, String, String, String, Long](Set("localhost"),
-          addr => 8887 -> addr,
+          addr => TCP.fromSocketClient(8887, addr, noDelay = true),
           Transducer.utf8Decode,
           str => Chunk.fromArray(str.getBytes("UTF8")),
           tracker,

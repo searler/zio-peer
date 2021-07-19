@@ -1,15 +1,15 @@
 package searler.zio_peer
 
-import searler.zio_tcp.TCP
+import searler.zio_tcp.TCP.Channel
 import zio._
 import zio.blocking.Blocking
-import zio.stream.ZTransducer
+import zio.stream.{ZStream, ZTransducer}
 
 import java.net.SocketAddress
 
 object Acceptor {
 
-  def apply[A, T, S, U](port: Int,
+  def apply[A, T, S, U](connections: ZStream[Blocking, Throwable, Channel],
                         parallelism: Int,
                         lookup: SocketAddress => Option[A],
                         input: ZTransducer[Any, Nothing, Byte, S],
@@ -21,7 +21,7 @@ object Acceptor {
     val base = BaseServer(input, output, tracker, hub, processor, initial)
 
     for {
-      _ <- TCP.fromSocketServer(port, noDelay = true)
+      _ <- connections
         .mapMParUnordered(parallelism) {
           c =>
             (for {
