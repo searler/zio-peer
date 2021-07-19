@@ -5,7 +5,7 @@ import zio.UIO
 import zio.stream.SubscriptionRef
 
 sealed trait AcceptorTracker[A] extends Tracker[A] {
-  def created(addr: Option[A], channel:Channel): UIO[Option[A]]
+  def created(addr: Option[A], channel: Channel): UIO[Option[A]]
 }
 
 object AcceptorTracker {
@@ -19,8 +19,8 @@ object AcceptorTracker {
 
   private final class Policy[A](protected val state: SubscriptionRef[Map[A, Channel]], private val retainNew: A => Boolean) extends Tracker.Base[A] with AcceptorTracker[A] {
 
-    def created(addr: Option[A], channel:Channel): UIO[Option[A]] = addr match {
-      case None => UIO(addr)
+    def created(addr: Option[A], channel: Channel): UIO[Option[A]] = addr match {
+      case None => channel.close() *> UIO(addr)
       case Some(a) => state.ref.modify { current =>
         current.get(a) match {
           case None => UIO(addr, current + (a -> channel))

@@ -1,7 +1,7 @@
 package searler.zio_peer
 
 import searler.zio_tcp.TCP
-import zio.stream.{Transducer, ZSink, ZStream, ZTransducer}
+import zio.stream.{Transducer, ZSink, ZStream}
 import zio.test.Assertion.equalTo
 import zio.test.{DefaultRunnableSpec, assert}
 import zio.{Chunk, Schedule, ZHub}
@@ -11,7 +11,7 @@ import java.net.{InetAddress, InetSocketAddress}
 object AcceptorSpec extends DefaultRunnableSpec {
   override def spec = suite("acceptor")(
 
-    testM("one") {
+    testM("uppercase") {
 
       for {
         tracker <- AcceptorTracker.dropOld[InetAddress]
@@ -42,7 +42,7 @@ object AcceptorSpec extends DefaultRunnableSpec {
   )
 
   private final def requestChunk() = for {
-    conn <- TCP.fromSocketClient(8886, "localhost").retry(Schedule.forever)
+    conn <- TCP.fromSocketClient(8886, "localhost", noDelay = true).retry(Schedule.forever)
     receive <- TCP.requestChunk(Chunk.fromArray("request".getBytes()))(conn)
   } yield new String(receive.toArray)
 }

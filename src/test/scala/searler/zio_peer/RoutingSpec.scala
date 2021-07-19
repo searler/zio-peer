@@ -1,7 +1,7 @@
 package searler.zio_peer
 
 import zio.test.Assertion.{isFalse, isTrue}
-import zio.test.{DefaultRunnableSpec, ZSpec, assert}
+import zio.test.{DefaultRunnableSpec, assert}
 
 object RoutingSpec extends DefaultRunnableSpec {
   override def spec = suite("addressing")(
@@ -9,7 +9,7 @@ object RoutingSpec extends DefaultRunnableSpec {
       test("matches Unit") {
         assert(ALL.matches(()))(isTrue)
       },
-        test("matches null") {
+      test("matches null") {
         assert(ALL.matches(null))(isTrue)
       }
       ,
@@ -18,14 +18,14 @@ object RoutingSpec extends DefaultRunnableSpec {
       }
     ),
 
-      suite("Single")(
+    suite("Single")(
 
       test("matches") {
         assert(Single("X").matches("X"))(isTrue)
       },
-        test("no match") {
-          assert(Single("X").matches("Y"))(isFalse)
-        }
+      test("no match") {
+        assert(Single("X").matches("Y"))(isFalse)
+      }
     ),
     suite("AllBut")(
 

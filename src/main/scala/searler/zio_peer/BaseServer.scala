@@ -4,7 +4,7 @@ import searler.zio_tcp.TCP.Channel
 import zio._
 import zio.stream.{ZStream, ZTransducer}
 
-private [zio_peer] object  BaseServer {
+private[zio_peer] object BaseServer {
 
   def apply[A, T, S, U](input: ZTransducer[Any, Nothing, Byte, S],
                         output: U => Chunk[Byte],

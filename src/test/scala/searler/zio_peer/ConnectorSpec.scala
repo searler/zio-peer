@@ -7,9 +7,9 @@ import zio.test.{DefaultRunnableSpec, assert}
 import zio.{Chunk, Schedule, ZHub}
 
 object ConnectorSpec extends DefaultRunnableSpec {
-  override def spec = suite("acceptor")(
+  override def spec = suite("connector")(
 
-    testM("one") {
+    testM("increment bytes") {
 
       for {
         tracker <- ConnectorTracker[String]

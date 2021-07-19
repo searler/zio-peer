@@ -5,7 +5,7 @@ import zio.UIO
 import zio.stream.SubscriptionRef
 
 sealed trait ConnectorTracker[A] extends Tracker[A] {
-  def created(addr: A, channel:Channel): UIO[Unit]
+  def created(addr: A, channel: Channel): UIO[Unit]
 }
 
 object ConnectorTracker {
@@ -14,12 +14,12 @@ object ConnectorTracker {
 
   private final class Recorder[A](protected val state: SubscriptionRef[Map[A, Channel]]) extends Tracker.Base[A] with ConnectorTracker[A] {
 
-    def created(addr: A, channel:Channel): UIO[Unit] =
+    def created(addr: A, channel: Channel): UIO[Unit] =
       state.ref.update { current =>
         current.get(addr) match {
           case None => UIO(current + (addr -> channel))
           case Some(c) =>
-           c.close() *> UIO(current + (addr -> channel))
+            c.close() *> UIO(current + (addr -> channel))
         }
       }
   }

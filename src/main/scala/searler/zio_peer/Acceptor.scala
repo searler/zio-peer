@@ -20,7 +20,7 @@ object Acceptor {
     val base = BaseServer(input, output, tracker, hub, processor)
 
     for {
-      _ <- TCP.fromSocketServer(port)
+      _ <- TCP.fromSocketServer(port, noDelay = true)
         .mapMParUnordered(parallelism) {
           c =>
             (for {

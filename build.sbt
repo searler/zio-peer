@@ -16,7 +16,7 @@ libraryDependencies += "dev.zio" %% "zio-streams" % zio_version
 libraryDependencies += "dev.zio" %% "zio-test"          % zio_version % "test"
 libraryDependencies +=  "dev.zio" %% "zio-test-sbt"      % zio_version % "test"
 
-libraryDependencies += "searler" %% "zio-tcp" % "0.2"
+libraryDependencies += "searler" %% "zio-tcp" % "0.2-SNAPSHOT"
 
 testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 

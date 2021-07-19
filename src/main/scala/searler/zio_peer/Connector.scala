@@ -23,7 +23,7 @@ object Connector {
         addr => {
           val addrPair = lookup(addr)
           (for {
-            c <- TCP.fromSocketClient(addrPair._1, addrPair._2)
+            c <- TCP.fromSocketClient(addrPair._1, addrPair._2, noDelay = true)
             _ <- tracker.created(addr, c)
             _ <- base(addr, c)
           } yield ()).repeat(reconnector).retry(reconnector).either
