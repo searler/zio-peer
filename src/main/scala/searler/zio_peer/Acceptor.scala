@@ -29,7 +29,7 @@ object Acceptor {
             (for {
               looked <- c.remoteAddress.map(lookup)
               addr <- tracker.created(looked, c)
-              _ <- base(addr.get, c).when(addr.isDefined)
+              _ <- ZIO.foreach_(addr)(base(_, c))
             }
             yield ()).ensuring(c.close())
         }
