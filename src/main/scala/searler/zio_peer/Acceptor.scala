@@ -3,22 +3,24 @@ package searler.zio_peer
 import searler.zio_tcp.TCP.Channel
 import zio._
 import zio.blocking.Blocking
-import zio.stream.{ZStream, ZTransducer}
+import zio.stream.{Transducer, ZStream, ZTransducer}
 
 import java.net.SocketAddress
 
 object Acceptor {
 
+
+
   def apply[A, T, S, U](connections: ZStream[Blocking, Throwable, Channel],
                         parallelism: Int,
                         lookup: SocketAddress => Option[A],
-                        input: ZTransducer[Any, Nothing, Byte, S],
-                        output: U => Chunk[Byte],
+                        decoder: ZTransducer[Any, Nothing, Byte, S],
+                        encoder: U => Chunk[Byte],
                         tracker: AcceptorTracker[A],
-                        hub: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
+                        source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
                         processor: Enqueue[(A, S)],
                         initial: Iterable[S] = Seq.empty): ZIO[Blocking, Throwable, Unit] = {
-    val base = BaseServer(input, output, tracker, hub, processor, initial)
+    val base = BaseServer(decoder, encoder, tracker, source, processor, initial)
 
     for {
       _ <- connections
@@ -34,4 +36,18 @@ object Acceptor {
         .runDrain
     } yield ()
   }
+
+  import StringOperations._
+
+  def strings[A, T](connections: ZStream[Blocking, Throwable, Channel],
+                    parallelism: Int,
+                    lookup: SocketAddress => Option[A],
+                    tracker: AcceptorTracker[A],
+                    source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], String)],
+                    processor: Enqueue[(A, String)],
+                    initial: Iterable[String] = Seq.empty): ZIO[Blocking, Throwable, Unit] =
+    apply[A, T, String,String](connections,parallelism,lookup,
+      decoder,
+      encoder,
+      tracker,source,processor,initial)
 }

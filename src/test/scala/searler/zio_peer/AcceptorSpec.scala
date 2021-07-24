@@ -1,49 +1,63 @@
 package searler.zio_peer
 
+import searler.zio_peer.AcceptorSpec.{requestChunk, testM}
 import searler.zio_tcp.TCP
 import zio.stream.{Transducer, ZSink, ZStream}
-import zio.test.Assertion.equalTo
+import zio.test.Assertion.{equalTo, hasMessage, isLeft, isRight}
 import zio.test.{DefaultRunnableSpec, assert}
 import zio.{Chunk, Schedule, ZHub}
 
-import java.net.{InetAddress, InetSocketAddress}
+import java.net.{InetAddress, InetSocketAddress, SocketAddress}
 
 object AcceptorSpec extends DefaultRunnableSpec {
-  override def spec = suite("acceptor")(
 
-    testM("uppercase") {
+
+  def common(port:Int,lookup : SocketAddress => Option[InetAddress]) =  (for {
+    tracker <- AcceptorTracker.dropOld[InetAddress]
+
+    responseHub <-
+      ZHub.sliding[(Routing[InetAddress], String)](20)
+
+    requestHub <- ZHub.sliding[(InetAddress, String)](20)
+
+    _ <- ZStream.fromHub(requestHub).map(p => ALL -> (p._2.toUpperCase)).run(ZSink.fromHub(responseHub)).fork
+
+    server <- Acceptor[InetAddress, String, String, String](TCP.fromSocketServer(port, noDelay = true),
+      20,
+      lookup,
+      Transducer.utf8Decode,
+      str => Chunk.fromArray(str.getBytes("UTF8")),
+      tracker,
+      responseHub,
+      requestHub.toQueue
+    ).fork
+
+    result <- requestChunk(port)
+
+    _ <- server.interrupt
+  }yield result).either
+
+
+    override def spec = suite("acceptor")(
+
+    testM("lookup accepts connection") {
 
       for {
-        tracker <- AcceptorTracker.dropOld[InetAddress]
+       result <- common( 8886,sa => Option(sa.asInstanceOf[InetSocketAddress].getAddress))
+      } yield assert(result)(isRight(equalTo("REQUEST")))
+    },
 
-        responseHub <-
-          ZHub.sliding[(Routing[InetAddress], String)](20)
+      testM("lookup rejects connection") {
 
-        requestHub <- ZHub.sliding[(InetAddress, String)](20)
-
-        _ <- ZStream.fromHub(requestHub).map(p => ALL -> (p._2.toUpperCase)).run(ZSink.fromHub(responseHub)).fork
-
-        server <- Acceptor[InetAddress, String, String, String](TCP.fromSocketServer(8886, noDelay = true),
-          20,
-          sa => Option(sa.asInstanceOf[InetSocketAddress].getAddress),
-          Transducer.utf8Decode,
-          str => Chunk.fromArray(str.getBytes("UTF8")),
-          tracker,
-          responseHub,
-          requestHub.toQueue
-        ).fork
-
-        result <- requestChunk()
-
-        _ <- server.interrupt
-
-      } yield assert(result)(equalTo("REQUEST"))
+      for {
+        result <- common(8881, sa => Option.empty)
+      } yield assert(result)(isLeft(hasMessage(equalTo("Connection reset by peer"))))
     }
 
   )
 
-  private final def requestChunk() = for {
-    conn <- TCP.fromSocketClient(8886, "localhost", noDelay = true).retry(Schedule.forever)
+  private final def requestChunk(port:Int) = for {
+    conn <- TCP.fromSocketClient(port, "localhost", noDelay = true).retry(Schedule.forever)
     receive <- TCP.requestChunk(Chunk.fromArray("request".getBytes()))(conn)
   } yield new String(receive.toArray)
 }

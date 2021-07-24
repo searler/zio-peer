@@ -7,9 +7,9 @@ import zio.stream.{ZStream, ZTransducer}
 private[zio_peer] object BaseServer {
 
   def apply[A, T, S, U](input: ZTransducer[Any, Nothing, Byte, S],
-                        output: U => Chunk[Byte],
+                        encoder: U => Chunk[Byte],
                         tracker: Tracker[A],
-                        hub: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
+                        source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
                         processor: Enqueue[(A, S)],
                         initial: Iterable[S]): (A, Channel) => ZIO[Any, Nothing, Unit] = (addr: A, c: Channel) => {
     def reader(addr: A, promise: Promise[Nothing, Unit], c: Channel): UIO[Unit] =
@@ -21,11 +21,11 @@ private[zio_peer] object BaseServer {
       yield result).catchAll(_ => c.close())
 
     def writer(addr: A, promise: Promise[Nothing, Unit], c: Channel): UIO[Unit] = {
-      val managed = ZStream.fromHubManaged(hub).tapM(_ => promise.succeed(()))
+      val managed = ZStream.fromHubManaged(source).tapM(_ => promise.succeed(()))
       val hubStream = ZStream.unwrapManaged(managed)
 
       val items = hubStream.filter(_._1.matches(addr)).map(_._2)
-      val bytes = items.mapConcatChunk(output)
+      val bytes = items.mapConcatChunk(encoder)
       bytes.run(c.write).unit
     }.catchAll(_ => c.close())
 

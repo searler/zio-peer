@@ -2,22 +2,24 @@ package searler.zio_peer
 
 import searler.zio_tcp.TCP.Channel
 import zio.blocking.Blocking
-import zio.stream.{ZStream, ZTransducer}
+import zio.stream.{Transducer, ZStream, ZTransducer}
 import zio.{Chunk, Enqueue, Schedule, ZHub, ZIO}
 
 object Connector {
 
+  private val EOL = Chunk.single[Byte]('\n')
+
   def apply[A, T, S, U, C](acceptors: Set[A],
                            builder: A => ZIO[Blocking, Throwable, Channel],
-                           input: ZTransducer[Any, Nothing, Byte, S],
-                           output: U => Chunk[Byte],
+                           decoder: ZTransducer[Any, Nothing, Byte, S],
+                           encoder: U => Chunk[Byte],
                            tracker: ConnectorTracker[A],
-                           hub: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
+                           source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
                            processor: Enqueue[(A, S)],
                            reconnector: Schedule[Any, Any, C],
                            initial: Iterable[S] = Seq.empty)
   = {
-    val base = BaseServer(input, output, tracker, hub, processor, initial)
+    val base = BaseServer(decoder, encoder, tracker, source, processor, initial)
 
     for {
       _ <- ZStream.fromIterable(acceptors).mapMParUnordered(acceptors.size) {
@@ -32,5 +34,17 @@ object Connector {
     }
     yield ()
   }
+
+  import StringOperations._
+
+  def strings[A, T, C](acceptors: Set[A],
+                       builder: A => ZIO[Blocking, Throwable, Channel],
+                       tracker: ConnectorTracker[A],
+                       source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], String)],
+                       processor: Enqueue[(A, String)],
+                       reconnector: Schedule[Any, Any, C],
+                       initial: Iterable[String] = Seq.empty) = apply[A, T, String, String, C](
+    acceptors,builder,  decoder,encoder, tracker,source,processor,reconnector,initial
+  )
 
 }
