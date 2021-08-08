@@ -4,14 +4,16 @@ import searler.zio_tcp.TCP.Channel
 import zio.UIO
 import zio.stream.{SubscriptionRef, UStream}
 
-private[zio_peer] trait Tracker[A] {
-
-
-  def destroyed(addr: A, channel: Channel): UIO[Unit]
+trait Tracked[A] {
 
   def get: UIO[Set[A]]
 
   def changes: UStream[Set[A]]
+}
+
+
+private[zio_peer] trait Tracker[A]  extends Tracked[A]{
+  def destroyed(addr: A, channel: Channel): UIO[Unit]
 }
 
 
