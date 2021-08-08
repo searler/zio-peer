@@ -9,6 +9,10 @@ case object ALL extends Routing[Any] {
   override def matches(address: Any): Boolean = true
 }
 
+case object IGNORE extends Routing[Any] {
+  override def matches(address: Any): Boolean = false
+}
+
 case class Single[E](target: E) extends Routing[E] {
   override def matches(address: E): Boolean = address == target
 }
