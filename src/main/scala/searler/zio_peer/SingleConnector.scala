@@ -2,8 +2,10 @@ package searler.zio_peer
 
 import searler.zio_tcp.TCP.Channel
 import zio.blocking.Blocking
+import zio.clock.Clock
 import zio.stream.{Transducer, ZStream, ZTransducer}
-import zio.{Chunk, Enqueue, Promise, Schedule, UIO, ZHub, ZIO}
+import zio.{Chunk, Enqueue, Promise, Schedule, UIO, URIO, ZHub, ZIO}
+import zio.duration._
 
 object SingleConnector {
 
@@ -17,22 +19,23 @@ object SingleConnector {
                          source: ZHub[Any, Any, Nothing, Nothing, T, U],
                          processor: Enqueue[S],
                          reconnector: Schedule[Any, Any, C],
+                         ignored:S=>Boolean,
                          initial: Iterable[S] = Seq.empty)
   = {
     def base(c: Channel) = {
-      def reader(promise: Promise[Nothing, Unit], c: Channel): UIO[Unit] =
+      def reader(promise: Promise[Nothing, Unit], c: Channel): URIO[Clock,Unit] =
         (for {
           _ <- promise.await
-          result <- (ZStream.fromIterable(initial) ++ c.read.transduce(decoder))
+          result <- (ZStream.fromIterable(initial) ++ c.read.transduce(decoder)).timeout(2.seconds).filterNot(ignored)
             .foreach(line => processor.offer(line)).ensuring(c.close())
         }
         yield result).catchAll(_ => c.close())
 
-      def writer(promise: Promise[Nothing, Unit], c: Channel): UIO[Unit] = {
+      def writer(promise: Promise[Nothing, Unit], c: Channel): URIO[Clock,Unit] = {
         val managed = ZStream.fromHubManaged(source).tapM(_ => promise.succeed(()))
         val hubStream = ZStream.unwrapManaged(managed)
 
-        val bytes = hubStream.mapConcatChunk(encoder)
+        val bytes = hubStream.mapConcatChunk(encoder).mergeTerminateLeft(ZStream.tick(1.seconds).as('\n'.asInstanceOf[Byte]))
         bytes.run(c.write).unit
       }.catchAll(_ => c.close())
 
@@ -68,6 +71,7 @@ object SingleConnector {
     source,
     processor,
     reconnector,
+    _.isBlank,
     initial)
 
 }

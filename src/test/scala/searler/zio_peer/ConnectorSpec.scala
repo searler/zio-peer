@@ -36,6 +36,7 @@ object ConnectorSpec extends DefaultRunnableSpec {
           outHub,
           inHub.toQueue,
           Schedule.forever,
+          _.isBlank,
           Seq("INITIAL")
         ).fork
 
@@ -50,7 +51,7 @@ object ConnectorSpec extends DefaultRunnableSpec {
         _ <- connector.interrupt
         _ <- server.interrupt
 
-      } yield assert(result)(equalTo(Some("localhost" -> "dpnnboe")))
+      } yield assert(result)(equalTo(Some("localhost" -> "\u000bdpnnboe")))
     }
 
   )

@@ -9,6 +9,7 @@ import zio.test.Assertion.{equalTo, hasMessage, isLeft, isRight}
 import zio.test.{DefaultRunnableSpec, assert}
 import zio.{Chunk, Exit, Schedule, URIO, ZHub, ZIO}
 
+import java.lang.System.console
 import java.net.{InetAddress, InetSocketAddress, SocketAddress}
 
 object AcceptorSpec extends DefaultRunnableSpec {
@@ -44,7 +45,7 @@ object AcceptorSpec extends DefaultRunnableSpec {
 
       for {
        result <- common( 8886,sa => Option(sa.asInstanceOf[InetSocketAddress].getAddress))
-      } yield assert(result)(isRight(equalTo("REQUEST\n")))
+      } yield assert(result)(isRight(equalTo("\nREQUEST\n")))
     },
 
       testM("lookup rejects connection") {

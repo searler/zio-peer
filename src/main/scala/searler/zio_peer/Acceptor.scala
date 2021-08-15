@@ -3,6 +3,7 @@ package searler.zio_peer
 import searler.zio_tcp.TCP.Channel
 import zio._
 import zio.blocking.Blocking
+import zio.clock.Clock
 import zio.stream.{Transducer, ZStream, ZTransducer}
 
 import java.net.SocketAddress
@@ -19,8 +20,9 @@ object Acceptor {
                         tracker: AcceptorTracker[A],
                         source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
                         processor: Enqueue[(A, S)],
-                        initial: Iterable[S] = Seq.empty): ZIO[Blocking, Throwable, Unit] = {
-    val base = BaseServer(decoder, encoder, tracker, source, processor, initial)
+                        ignored:S=>Boolean,
+                        initial: Iterable[S] = Seq.empty): ZIO[Blocking with Clock, Throwable, Unit] = {
+    val base = BaseServer(decoder, encoder, tracker, source, processor, ignored,initial)
 
     for {
       _ <- connections
@@ -45,9 +47,11 @@ object Acceptor {
                     tracker: AcceptorTracker[A],
                     source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], String)],
                     processor: Enqueue[(A, String)],
-                    initial: Iterable[String] = Seq.empty): ZIO[Blocking, Throwable, Unit] =
+                    initial: Iterable[String] = Seq.empty): ZIO[Blocking with Clock, Throwable, Unit] =
     apply[A, T, String,String](connections,parallelism,lookup,
       decoder,
       encoder,
-      tracker,source,processor,initial)
+      tracker,source,processor,
+      _.isBlank,
+      initial)
 }

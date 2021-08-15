@@ -17,9 +17,10 @@ object Connector {
                            source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
                            processor: Enqueue[(A, S)],
                            reconnector: Schedule[Any, Any, C],
+                           ignored:S=>Boolean,
                            initial: Iterable[S] = Seq.empty)
   = {
-    val base = BaseServer(decoder, encoder, tracker, source, processor, initial)
+    val base = BaseServer(decoder, encoder, tracker, source, processor, ignored, initial)
 
     for {
       _ <- ZStream.fromIterable(acceptors).mapMParUnordered(acceptors.size) {
@@ -44,7 +45,9 @@ object Connector {
                        processor: Enqueue[(A, String)],
                        reconnector: Schedule[Any, Any, C],
                        initial: Iterable[String] = Seq.empty) = apply[A, T, String, String, C](
-    acceptors,builder,  decoder,encoder, tracker,source,processor,reconnector,initial
+    acceptors,builder,  decoder,encoder, tracker,source,processor,reconnector,
+    _.isBlank,
+    initial
   )
 
 }
