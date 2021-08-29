@@ -41,14 +41,14 @@ object Acceptor {
 
   import StringOperations._
 
-  def strings[A, T](connections: ZStream[Blocking, Throwable, Channel],
+  def strings[A](connections: ZStream[Blocking, Throwable, Channel],
                     parallelism: Int,
                     lookup: SocketAddress => Option[A],
                     tracker: AcceptorTracker[A],
-                    source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], String)],
+                    source: Hub[ (Routing[A], String)],
                     processor: Enqueue[(A, String)],
                     initial: Iterable[String] = Seq.empty): ZIO[Blocking with Clock, Throwable, Unit] =
-    apply[A, T, String,String](connections,parallelism,lookup,
+    apply[A, String, String,String](connections,parallelism,lookup,
       decoder,
       encoder,
       tracker,source,processor,

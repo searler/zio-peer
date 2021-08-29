@@ -25,7 +25,7 @@ object AcceptorSpec extends DefaultRunnableSpec {
 
     _ <- ZStream.fromHub(requestHub).map(p => ALL -> (p._2.toUpperCase)).run(ZSink.fromHub(responseHub)).fork
 
-    server <- Acceptor.strings[InetAddress,  String](TCP.fromSocketServer(port, noDelay = true),
+    server <- Acceptor.strings[InetAddress](TCP.fromSocketServer(port, noDelay = true),
       20,
       lookup,
       tracker,
