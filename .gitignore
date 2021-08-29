@@ -1,2 +1,6 @@
 *.class
 *.log
+*.cache
+.idea
+target
+.bsp
