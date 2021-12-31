@@ -51,7 +51,7 @@ object ConnectorSpec extends DefaultRunnableSpec {
         _ <- connector.interrupt
         _ <- server.interrupt
 
-      } yield assert(result)(equalTo(Some("localhost" -> "\u000bdpnnboe")))
+      } yield assert(result)(equalTo(Some("localhost" -> "\u000b\u000bdpnnboe")))
     }
 
   )
