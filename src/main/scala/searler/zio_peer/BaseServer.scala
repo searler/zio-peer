@@ -19,9 +19,8 @@ private[zio_peer] object BaseServer {
     def reader(addr: A, promise: Promise[Nothing, Unit], c: Channel): URIO[Clock,Unit] =
       (for {
         _ <- promise.await
-        result <- (ZStream.fromIterable(initial) ++ c.read.via(input >>>ZPipeline.map{s => println(s"reader ${s.toString.toArray.toList}");s}  )).timeout(2.seconds).filterNot(ignored)
+        result <- (ZStream.fromIterable(initial) ++ c.read.via(input)).timeout(2.seconds).filterNot(ignored)
           .foreach(line => processor.offer(addr, line)).ensuring(c.close())
-        _ <- ZIO.debug("terminated $result")
       }
       yield result).catchAll(_ => c.close())
 
@@ -32,7 +31,7 @@ private[zio_peer] object BaseServer {
 
 
       val items = hubStream.filter(_._1.matches(addr)).map(_._2)
-      val bytes: ZStream[Clock, Nothing, Byte] = items.mapConcatChunk(encoder).mergeTerminateLeft(ZStream.tick(1.seconds).as(EOL))
+      val bytes: ZStream[Clock, Nothing, Byte] = items.mapConcatChunk(encoder).mergeTerminateLeft((ZStream.unit ++ ZStream.tick(1.seconds)).as(EOL))
       bytes.run(c.write).unit
     }.catchAll(_ => c.close())
 
