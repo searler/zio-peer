@@ -15,13 +15,13 @@ object AcceptorTracker {
 
   def dropNew[A]: UIO[AcceptorTracker[A]] = policy(_ => false)
 
-  def dropOld[A]: UIO[AcceptorTracker[A]] = policy(_ => true)
+  def dropOld[A]: UIO[AcceptorTracker[A]] = policy(x =>   true)
 
   private final class Policy[A](protected val state: SubscriptionRef[Map[A, Channel]], private val retainNew: A => Boolean) extends Tracker.Base[A] with AcceptorTracker[A] {
 
     def created(addr: Option[A], channel: Channel): UIO[Option[A]] = addr match {
       case None => channel.close() *> UIO(addr)
-      case Some(a) => state.ref.modify { current =>
+      case Some(a) => state.ref.modifyZIO { current =>
         current.get(a) match {
           case None => UIO(addr, current + (a -> channel))
           case Some(existing) =>

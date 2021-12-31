@@ -1,21 +1,19 @@
 package searler.zio_peer
 
-import searler.zio_peer.AcceptorSpec.{requestChunk, testM}
 import searler.zio_tcp.TCP
-import zio.blocking.Blocking
-import zio.clock.Clock
-import zio.stream.{Transducer, ZSink, ZStream}
+
+import zio.Clock
+import zio.stream.{ZPipeline, ZSink, ZStream}
 import zio.test.Assertion.{equalTo, hasMessage, isLeft, isRight}
 import zio.test.{DefaultRunnableSpec, assert}
-import zio.{Chunk, Exit, Schedule, URIO, ZHub, ZIO}
+import zio.{Chunk,  Schedule, URIO, ZHub}
 
-import java.lang.System.console
 import java.net.{InetAddress, InetSocketAddress, SocketAddress}
 
 object AcceptorSpec extends DefaultRunnableSpec {
 
 
-  def common(port:Int,lookup : SocketAddress => Option[InetAddress]): URIO[Blocking with Clock, Either[Throwable, String]] =  (for {
+  def common(port:Int,lookup : SocketAddress => Option[InetAddress]): URIO[Clock, Either[Throwable, String]] =  (for {
     tracker <- AcceptorTracker.dropOld[InetAddress]
 
     responseHub <-
@@ -41,14 +39,14 @@ object AcceptorSpec extends DefaultRunnableSpec {
 
     override def spec = suite("acceptor")(
 
-    testM("lookup accepts connection") {
+    test("lookup accepts connection") {
 
       for {
        result <- common( 8886,sa => Option(sa.asInstanceOf[InetSocketAddress].getAddress))
       } yield assert(result)(isRight(equalTo("\nREQUEST\n")))
     },
 
-      testM("lookup rejects connection") {
+      test("lookup rejects connection") {
 
       for {
         result <- common(8881, sa => Option.empty)

@@ -14,7 +14,7 @@ object TrackerSpec extends DefaultRunnableSpec {
   override def spec = suite("Tracker")(
     suite("AcceptorTracker")(
       suite("dropNew")(
-        testM("created None") {
+        test("created None") {
           val socket = new MockSocket
           for {
             tracker <- AcceptorTracker.dropNew[String]
@@ -24,7 +24,7 @@ object TrackerSpec extends DefaultRunnableSpec {
           yield assert(result)(isNone) && assert(socket.isOpen)(isFalse) &&
             assert(contents)(isEmpty)
         },
-        testM("created Some") {
+        test("created Some") {
           val socket = new MockSocket
           for {
             tracker <- AcceptorTracker.dropNew[String]
@@ -35,7 +35,7 @@ object TrackerSpec extends DefaultRunnableSpec {
             assert(contents)(equalTo(Set("X")))
         }
         ,
-        testM("created duplicate") {
+        test("created duplicate") {
           val socket1 = new MockSocket
           val socket2 = new MockSocket
           for {
@@ -49,7 +49,7 @@ object TrackerSpec extends DefaultRunnableSpec {
             assert(contents)(equalTo(Set("X")))
         },
 
-        testM("created distinct") {
+        test("created distinct") {
           val socket1 = new MockSocket
           val socket2 = new MockSocket
           for {
@@ -67,7 +67,7 @@ object TrackerSpec extends DefaultRunnableSpec {
 
 
       suite("dropOld")(
-        testM("created None") {
+        test("created None") {
           val socket = new MockSocket
           for {
             tracker <- AcceptorTracker.dropOld[String]
@@ -77,7 +77,7 @@ object TrackerSpec extends DefaultRunnableSpec {
           yield assert(result)(isNone) && assert(socket.isOpen)(isFalse) &&
             assert(contents)(isEmpty)
         },
-        testM("created Some") {
+        test("created Some") {
           val socket = new MockSocket
           for {
             tracker <- AcceptorTracker.dropOld[String]
@@ -88,7 +88,7 @@ object TrackerSpec extends DefaultRunnableSpec {
             assert(contents)(equalTo(Set("X")))
         }
         ,
-        testM("created duplicate") {
+        test("created duplicate") {
           val socket1 = new MockSocket
           val socket2 = new MockSocket
           for {
@@ -102,7 +102,7 @@ object TrackerSpec extends DefaultRunnableSpec {
             assert(contents)(equalTo(Set("X")))
         },
 
-        testM("created distinct") {
+        test("created distinct") {
           val socket1 = new MockSocket
           val socket2 = new MockSocket
           for {
@@ -121,7 +121,7 @@ object TrackerSpec extends DefaultRunnableSpec {
     , suite("ConnectorTracker")(
 
 
-      testM("created Some") {
+      test("created Some") {
         val socket = new MockSocket
         for {
           tracker <- ConnectorTracker[String]
@@ -132,7 +132,7 @@ object TrackerSpec extends DefaultRunnableSpec {
           assert(contents)(equalTo(Set("X")))
       }
       ,
-      testM("created duplicate") {
+      test("created duplicate") {
         val socket1 = new MockSocket
         val socket2 = new MockSocket
         for {
@@ -146,7 +146,7 @@ object TrackerSpec extends DefaultRunnableSpec {
           assert(contents)(equalTo(Set("X")))
       },
 
-      testM("created distinct") {
+      test("created distinct") {
         val socket1 = new MockSocket
         val socket2 = new MockSocket
         for {

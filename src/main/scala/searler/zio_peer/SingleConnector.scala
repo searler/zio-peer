@@ -1,19 +1,19 @@
 package searler.zio_peer
 
 import searler.zio_tcp.TCP.Channel
-import zio.blocking.Blocking
-import zio.clock.Clock
-import zio.stream.{Transducer, ZStream, ZTransducer}
+
+import zio.Clock
+import zio.stream.{ ZPipeline, ZStream}
 import zio.{Chunk, Enqueue, Promise, Schedule, UIO, URIO, ZHub, ZIO}
-import zio.duration._
+import zio._
 
 object SingleConnector {
 
   private val EOL = Chunk.single[Byte]('\n')
 
   def apply[T, S, U, C](
-                         builder: => ZIO[Blocking, Throwable, Channel],
-                         decoder: ZTransducer[Any, Nothing, Byte, S],
+                         builder: => ZIO[Any, Throwable, Channel],
+                         decoder: ZPipeline[Any, Nothing, Byte, S],
                          encoder: U => Chunk[Byte],
                          tracker: Enqueue[Boolean],
                          source: ZHub[Any, Any, Nothing, Nothing, T, U],
@@ -26,7 +26,7 @@ object SingleConnector {
       def reader(promise: Promise[Nothing, Unit], c: Channel): URIO[Clock,Unit] =
         (for {
           _ <- promise.await
-          result <- (ZStream.fromIterable(initial) ++ c.read.transduce(decoder)).timeout(2.seconds).filterNot(ignored)
+          result <- (ZStream.fromIterable(initial) ++ c.read.via(decoder)).timeout(2.seconds).filterNot(ignored)
             .foreach(line => processor.offer(line)).ensuring(c.close())
         }
         yield result).catchAll(_ => c.close())
@@ -58,7 +58,7 @@ object SingleConnector {
 
 
   def strings[T, C](
-                     builder: => ZIO[Blocking, Throwable, Channel],
+                     builder: => ZIO[Any, Throwable, Channel],
                      tracker: Enqueue[Boolean],
                      source: ZHub[Any, Any, Nothing, Nothing, T, String],
                      processor: Enqueue[String],

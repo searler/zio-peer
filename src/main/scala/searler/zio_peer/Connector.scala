@@ -1,8 +1,8 @@
 package searler.zio_peer
 
 import searler.zio_tcp.TCP.Channel
-import zio.blocking.Blocking
-import zio.stream.{Transducer, ZStream, ZTransducer}
+
+import zio.stream.{ ZPipeline, ZStream}
 import zio.{Chunk, Enqueue, Schedule, ZHub, ZIO}
 
 object Connector {
@@ -10,8 +10,8 @@ object Connector {
   private val EOL = Chunk.single[Byte]('\n')
 
   def apply[A, T, S, U, C](acceptors: Set[A],
-                           builder: A => ZIO[Blocking, Throwable, Channel],
-                           decoder: ZTransducer[Any, Nothing, Byte, S],
+                           builder: A => ZIO[Any, Throwable, Channel],
+                           decoder: ZPipeline[Any, Nothing, Byte, S],
                            encoder: U => Chunk[Byte],
                            tracker: ConnectorTracker[A],
                            source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
@@ -23,7 +23,7 @@ object Connector {
     val base = BaseServer(decoder, encoder, tracker, source, processor, ignored, initial)
 
     for {
-      _ <- ZStream.fromIterable(acceptors).mapMParUnordered(acceptors.size) {
+      _ <- ZStream.fromIterable(acceptors).mapZIOParUnordered(acceptors.size) {
         addr => {
           (for {
             c <- builder(addr)
@@ -39,7 +39,7 @@ object Connector {
   import StringOperations._
 
   def strings[A, T, C](acceptors: Set[A],
-                       builder: A => ZIO[Blocking, Throwable, Channel],
+                       builder: A => ZIO[Any, Throwable, Channel],
                        tracker: ConnectorTracker[A],
                        source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], String)],
                        processor: Enqueue[(A, String)],

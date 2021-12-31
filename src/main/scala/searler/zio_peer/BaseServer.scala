@@ -2,14 +2,14 @@ package searler.zio_peer
 
 import searler.zio_tcp.TCP.Channel
 import zio._
-import zio.clock.Clock
-import zio.stream.{ZStream, ZTransducer}
-import zio.duration._
+import zio.Clock
+import zio.stream.{ZPipeline, ZStream}
+
 
 private[zio_peer] object BaseServer {
   val EOL:Byte = '\n'
 
-  def apply[A, T, S, U](input: ZTransducer[Any, Nothing, Byte, S],
+  def apply[A, T, S, U](input: ZPipeline[Any, Nothing, Byte, S],
                         encoder: U => Chunk[Byte],
                         tracker: Tracker[A],
                         source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
@@ -19,14 +19,17 @@ private[zio_peer] object BaseServer {
     def reader(addr: A, promise: Promise[Nothing, Unit], c: Channel): URIO[Clock,Unit] =
       (for {
         _ <- promise.await
-        result <- (ZStream.fromIterable(initial) ++ c.read.transduce(input)).timeout(2.seconds).filterNot(ignored)
+        result <- (ZStream.fromIterable(initial) ++ c.read.via(input >>>ZPipeline.map{s => println(s"reader ${s.toString.toArray.toList}");s}  )).timeout(2.seconds).filterNot(ignored)
           .foreach(line => processor.offer(addr, line)).ensuring(c.close())
+        _ <- ZIO.debug("terminated $result")
       }
       yield result).catchAll(_ => c.close())
 
     def writer(addr: A, promise: Promise[Nothing, Unit], c: Channel): URIO[Clock,Unit] = {
-      val managed = ZStream.fromHubManaged(source).tapM(_ => promise.succeed(()))
+      val managed = ZStream.fromHubManaged(source).tapZIO(_ => promise.succeed(()))
       val hubStream = ZStream.unwrapManaged(managed)
+
+
 
       val items = hubStream.filter(_._1.matches(addr)).map(_._2)
       val bytes: ZStream[Clock, Nothing, Byte] = items.mapConcatChunk(encoder).mergeTerminateLeft(ZStream.tick(1.seconds).as(EOL))

@@ -15,7 +15,7 @@ object ConnectorTracker {
   private final class Recorder[A](protected val state: SubscriptionRef[Map[A, Channel]]) extends Tracker.Base[A] with ConnectorTracker[A] {
 
     def created(addr: A, channel: Channel): UIO[Unit] =
-      state.ref.update { current =>
+      state.ref.updateZIO { current =>
         current.get(addr) match {
           case None => UIO(current + (addr -> channel))
           case Some(c) =>

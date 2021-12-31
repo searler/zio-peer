@@ -1,15 +1,15 @@
 
 
 
-scalaVersion := "2.13.1"
+scalaVersion := "2.13.7"
 
 
 name := "zio-peer"
 organization := "searler"
-version := "0.3.2-SNAPSHOT"
+version := "0.3.3-SNAPSHOT"
 
 
-val zio_version ="1.0.10"
+val zio_version ="2.0.0-RC1"
 
 libraryDependencies += "dev.zio" %% "zio" % zio_version
 libraryDependencies += "dev.zio" %% "zio-streams" % zio_version

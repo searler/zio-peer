@@ -1,7 +1,7 @@
 package searler.zio_peer
 
 import searler.zio_tcp.TCP
-import zio.stream.{Transducer, ZStream}
+import zio.stream.{ZPipeline, ZStream}
 import zio.test.Assertion.equalTo
 import zio.test.{DefaultRunnableSpec, assert}
 import zio.{Chunk, Schedule, ZHub}
@@ -9,11 +9,11 @@ import zio.{Chunk, Schedule, ZHub}
 object ConnectorSpec extends DefaultRunnableSpec {
   override def spec = suite("connector")(
 
-    testM("increment bytes") {
+    test("increment bytes") {
 
       for {
         tracker <- ConnectorTracker[String]
-        tstream = tracker.changes.filter(!_.isEmpty)
+        tstream = tracker.changes.filter(_.nonEmpty)
 
         outHub <-
           ZHub.sliding[(Routing[String], String)](20)
@@ -30,7 +30,7 @@ object ConnectorSpec extends DefaultRunnableSpec {
 
         connector <- Connector[String, String, String, String, Long](Set("localhost"),
           addr => TCP.fromSocketClient(8887, addr, noDelay = true),
-          Transducer.utf8Decode,
+          ZPipeline.utf8Decode,
           str => Chunk.fromArray(str.getBytes("UTF8")),
           tracker,
           outHub,
@@ -59,7 +59,7 @@ object ConnectorSpec extends DefaultRunnableSpec {
   private final def runServer() =
     TCP
       .fromSocketServer(8887)
-      .mapMParUnordered(4)(TCP.handlerServer(_ => _.map(b => (b + 1).asInstanceOf[Byte])))
+      .mapZIOParUnordered(4)(TCP.handlerServer(_ => _.map(b => (b + 1).asInstanceOf[Byte])))
       .runDrain
 
 }

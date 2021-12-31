@@ -24,8 +24,8 @@ private[zio_peer] object Tracker {
     protected val state: SubscriptionRef[Map[A, Channel]]
 
     def destroyed(addr: A, channel: Channel): UIO[Unit] = state.ref.update(current => current.get(addr) match {
-      case Some(c) if channel == c => UIO(current - addr)
-      case _@x => UIO(current)
+      case Some(c) if channel == c => (current - addr)
+      case _@x => (current)
     }) *> channel.close()
 
     def changes = state.changes.map(_.keys.toSet)
