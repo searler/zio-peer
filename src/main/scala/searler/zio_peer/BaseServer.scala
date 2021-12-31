@@ -25,7 +25,7 @@ private[zio_peer] object BaseServer {
       yield result).catchAll(_ => c.close())
 
     def writer(addr: A, promise: Promise[Nothing, Unit], c: Channel): URIO[Clock,Unit] = {
-      val managed = ZStream.fromHubManaged(source).tapZIO(_ => promise.succeed(()))
+      val managed = ZStream.fromHubManaged(source).tapZIO((_: ZStream[Any, Nothing, (Routing[A], U)])  => promise.succeed(()))
       val hubStream = ZStream.unwrapManaged(managed)
 
 
