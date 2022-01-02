@@ -4,7 +4,7 @@ import searler.zio_tcp.TCP
 import zio.stream.{ZPipeline, ZStream}
 import zio.test.Assertion.equalTo
 import zio.test.{DefaultRunnableSpec, assert}
-import zio.{Chunk, Schedule, ZHub}
+import zio.{Chunk, Hub, Schedule, ZHub}
 
 object ConnectorSpec extends DefaultRunnableSpec {
   override def spec = suite("connector")(
@@ -15,10 +15,10 @@ object ConnectorSpec extends DefaultRunnableSpec {
         tracker <- ConnectorTracker[String]
         tstream = tracker.changes.filter(_.nonEmpty)
 
-        outHub <-
+        outHub: Hub[(Routing[String], String)] <-
           ZHub.sliding[(Routing[String], String)](20)
 
-        inHub <- ZHub.sliding[(String, String)](20)
+        inHub: Hub[(String, String)] <- ZHub.sliding[(String, String)](20)
 
 
         gatherResult <- ZStream.fromHub(inHub).filter(_._2 != "INITIAL").runHead.fork
@@ -28,7 +28,7 @@ object ConnectorSpec extends DefaultRunnableSpec {
 
         server <- runServer().fork
 
-        connector <- Connector[String, String, String, String, Long](Set("localhost"),
+        connector <- Connector[String,  String, String, Long](Set("localhost"),
           addr => TCP.fromSocketClient(8887, addr, noDelay = true),
           ZPipeline.utf8Decode,
           str => Chunk.fromArray(str.getBytes("UTF8")),

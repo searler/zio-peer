@@ -12,13 +12,13 @@ object Acceptor {
 
 
 
-  def apply[A, T, S, U](connections: ZStream[Any, Throwable, Channel],
+  def apply[A, S, U](connections: ZStream[Any, Throwable, Channel],
                         parallelism: Int,
                         lookup: SocketAddress => Option[A],
                         decoder: ZPipeline[Any, Nothing, Byte, S],
                         encoder: U => Chunk[Byte],
                         tracker: AcceptorTracker[A],
-                        source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
+                        source: ZHub[Any, Any, Nothing, Nothing, _, (Routing[A], U)],
                         processor: Enqueue[(A, S)],
                         ignored:S=>Boolean,
                         initial: Iterable[S] = Seq.empty): ZIO[Clock, Throwable, Unit] = {
@@ -48,7 +48,7 @@ object Acceptor {
                     source: Hub[ (Routing[A], String)],
                     processor: Enqueue[(A, String)],
                     initial: Iterable[String] = Seq.empty): ZIO[ Clock, Throwable, Unit] =
-    apply[A, String, String,String](connections,parallelism,lookup,
+    apply[A,  String,String](connections,parallelism,lookup,
       decoder,
       encoder,
       tracker,source,processor,

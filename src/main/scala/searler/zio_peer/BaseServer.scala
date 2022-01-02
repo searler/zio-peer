@@ -5,14 +5,13 @@ import zio._
 import zio.Clock
 import zio.stream.{ZPipeline, ZStream}
 
-
 private[zio_peer] object BaseServer {
   val EOL:Byte = '\n'
 
-  def apply[A, T, S, U](input: ZPipeline[Any, Nothing, Byte, S],
+  def apply[A, S, U](input: ZPipeline[Any, Nothing, Byte, S],
                         encoder: U => Chunk[Byte],
                         tracker: Tracker[A],
-                        source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
+                        source: ZHub[Any, Any, Nothing, Nothing, _, (Routing[A], U)],
                         processor: Enqueue[(A, S)],
                         ignored:S=>Boolean,
                         initial: Iterable[S]): (A, Channel) => ZIO[Clock, Nothing, Unit] = (addr: A, c: Channel) => {
@@ -27,8 +26,6 @@ private[zio_peer] object BaseServer {
     def writer(addr: A, promise: Promise[Nothing, Unit], c: Channel): URIO[Clock,Unit] = {
       val managed = ZStream.fromHubManaged(source).tapZIO((_: ZStream[Any, Nothing, (Routing[A], U)])  => promise.succeed(()))
       val hubStream = ZStream.unwrapManaged(managed)
-
-
 
       val items = hubStream.filter(_._1.matches(addr)).map(_._2)
       val bytes: ZStream[Clock, Nothing, Byte] = items.mapConcatChunk(encoder).mergeTerminateLeft((ZStream.unit ++ ZStream.tick(1.seconds)).as(EOL))

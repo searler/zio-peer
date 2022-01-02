@@ -11,12 +11,12 @@ object SingleConnector {
 
   private val EOL = Chunk.single[Byte]('\n')
 
-  def apply[T, S, U, C](
+  def apply[S, U, C](
                          builder: => ZIO[Any, Throwable, Channel],
                          decoder: ZPipeline[Any, Nothing, Byte, S],
                          encoder: U => Chunk[Byte],
                          tracker: Enqueue[Boolean],
-                         source: ZHub[Any, Any, Nothing, Nothing, T, U],
+                         source: ZHub[Any, Any, Nothing, Nothing, _, U],
                          processor: Enqueue[S],
                          reconnector: Schedule[Any, Any, C],
                          ignored:S=>Boolean,
@@ -32,7 +32,7 @@ object SingleConnector {
         yield result).catchAll(_ => c.close())
 
       def writer(promise: Promise[Nothing, Unit], c: Channel): URIO[Clock,Unit] = {
-        val managed = ZStream.fromHubManaged(source).tapM(_ => promise.succeed(()))
+        val managed = ZStream.fromHubManaged(source).tapZIO((_: ZStream[Any, Nothing, U]) => promise.succeed(()))
         val hubStream = ZStream.unwrapManaged(managed)
 
         val bytes = hubStream.mapConcatChunk(encoder).mergeTerminateLeft(ZStream.tick(1.seconds).as('\n'.asInstanceOf[Byte]))
@@ -57,13 +57,13 @@ object SingleConnector {
   import StringOperations._
 
 
-  def strings[T, C](
+  def strings[C](
                      builder: => ZIO[Any, Throwable, Channel],
                      tracker: Enqueue[Boolean],
-                     source: ZHub[Any, Any, Nothing, Nothing, T, String],
+                     source: ZHub[Any, Any, Nothing, Nothing, _, String],
                      processor: Enqueue[String],
                      reconnector: Schedule[Any, Any, C],
-                     initial: Iterable[String] = Seq.empty) = apply[T, String, String, C](
+                     initial: Iterable[String] = Seq.empty) = apply[String, String, C](
     builder,
     decoder,
     encoder,

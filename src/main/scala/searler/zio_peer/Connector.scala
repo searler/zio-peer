@@ -9,12 +9,12 @@ object Connector {
 
   private val EOL = Chunk.single[Byte]('\n')
 
-  def apply[A, T, S, U, C](acceptors: Set[A],
+  def apply[A,  S, U, C](acceptors: Set[A],
                            builder: A => ZIO[Any, Throwable, Channel],
                            decoder: ZPipeline[Any, Nothing, Byte, S],
                            encoder: U => Chunk[Byte],
                            tracker: ConnectorTracker[A],
-                           source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], U)],
+                           source: ZHub[Any, Any, Nothing, Nothing,_,  (Routing[A], U)],
                            processor: Enqueue[(A, S)],
                            reconnector: Schedule[Any, Any, C],
                            ignored:S=>Boolean,
@@ -38,13 +38,13 @@ object Connector {
 
   import StringOperations._
 
-  def strings[A, T, C](acceptors: Set[A],
+  def strings[A,  C](acceptors: Set[A],
                        builder: A => ZIO[Any, Throwable, Channel],
                        tracker: ConnectorTracker[A],
-                       source: ZHub[Any, Any, Nothing, Nothing, (Routing[A], T), (Routing[A], String)],
+                       source: ZHub[Any, Any, Nothing, Nothing, _, (Routing[A], String)],
                        processor: Enqueue[(A, String)],
                        reconnector: Schedule[Any, Any, C],
-                       initial: Iterable[String] = Seq.empty) = apply[A, T, String, String, C](
+                       initial: Iterable[String] = Seq.empty) = apply[A,  String, String, C](
     acceptors,builder,  decoder,encoder, tracker,source,processor,reconnector,
     _.isBlank,
     initial
