@@ -1,6 +1,6 @@
-package searler.zio_peer
+package io.github.searler.zio_peer
 
-import searler.zio_tcp.TCP.Channel
+import io.github.searler.zio_tcp.TCP.Channel
 
 import zio.Clock
 import zio.stream.{ ZPipeline, ZStream}

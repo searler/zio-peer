@@ -1,12 +1,12 @@
-package searler.zio_peer
+package io.github.searler.zio_peer
 
-import searler.zio_tcp.TCP
-
+import io.github.searler.zio_peer.{ALL, Acceptor, Routing}
+import io.github.searler.zio_tcp.TCP
 import zio.Clock
 import zio.stream.{ZPipeline, ZSink, ZStream}
 import zio.test.Assertion.{equalTo, hasMessage, isLeft, isRight}
 import zio.test.{DefaultRunnableSpec, assert}
-import zio.{Chunk,  Schedule, URIO, ZHub}
+import zio.{Chunk, Schedule, URIO, ZHub}
 
 import java.net.{InetAddress, InetSocketAddress, SocketAddress}
 

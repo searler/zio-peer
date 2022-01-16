@@ -16,7 +16,7 @@ libraryDependencies += "dev.zio" %% "zio-streams" % zio_version
 libraryDependencies += "dev.zio" %% "zio-test"          % zio_version % "test"
 libraryDependencies +=  "dev.zio" %% "zio-test-sbt"      % zio_version % "test"
 
-libraryDependencies += "searler" %% "zio-tcp" % "0.2.1-SNAPSHOT"
+libraryDependencies += "io.github.searler" %% "zio-tcp" % "0.2.2-SNAPSHOT"
 
 testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 
@@ -26,5 +26,13 @@ testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 //githubTokenSource := TokenSource.GitConfig("github.token")
 
 //resolvers += Resolver.githubPackages("searler", "zio-tcp")
+
+resolvers += 
+  "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
+
+
+
+//resolvers += Resolver.sonatypeRepo(  "staging")
+//resolvers += Resolver.sonatypeRepo(  "releases")
 
 

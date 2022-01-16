@@ -1,4 +1,4 @@
-package searler.zio_peer
+package io.github.searler.zio_peer
 
 import zio.Chunk
 import zio.stream.{ZPipeline}

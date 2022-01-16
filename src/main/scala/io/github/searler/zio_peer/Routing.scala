@@ -1,5 +1,4 @@
-package searler.zio_peer
-
+package io.github.searler.zio_peer
 
 trait Routing[-E] {
   def matches(address: E): Boolean
