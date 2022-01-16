@@ -1,7 +1,7 @@
 package io.github.searler.zio_peer
 
 import io.github.searler.zio_peer.{ALL, Routing}
-import searler.zio_tcp.TCP
+import io.github.searler.zio_tcp.TCP
 import zio.stream.{ZPipeline, ZStream}
 import zio.test.Assertion.equalTo
 import zio.test.{DefaultRunnableSpec, assert}
