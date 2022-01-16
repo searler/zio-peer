@@ -1,7 +1,7 @@
-package searler.zio_peer
+package io.github.searler.zio_peer
 
-import searler.zio_peer.AcceptorSpec.{requestChunk, testM}
-import searler.zio_tcp.TCP
+import AcceptorSpec.{requestChunk, testM}
+import io.github.searler.zio_tcp.TCP
 import zio.blocking.Blocking
 import zio.clock.Clock
 import zio.stream.{Transducer, ZSink, ZStream}

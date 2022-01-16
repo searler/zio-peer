@@ -1,4 +1,4 @@
-package searler.zio_peer
+package io.github.searler.zio_peer
 
 import zio.test.Assertion.{isFalse, isTrue}
 import zio.test.{DefaultRunnableSpec, assert}

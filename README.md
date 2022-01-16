@@ -15,10 +15,11 @@ Simple peer-peer library using zio
 ### Examples
 
 Echo in uppercase server
+
 ```scala
 
-import searler.zio_peer._
-import searler.zio_tcp.TCP
+import io.github.searler.zio_peer.{ALL, Acceptor, AcceptorTracker, Routing}
+import io.github.searler.zio_tcp.TCP
 import zio.stream.{ZSink, ZStream}
 import zio.{App, ExitCode, URIO, ZHub}
 
@@ -57,8 +58,8 @@ Client sending line read from stdin
 
 ```scala
 
-import searler.zio_peer._
-import searler.zio_tcp.TCP
+import io.github.searler.zio_peer.{ALL, Connector, ConnectorTracker, Routing}
+import io.github.searler.zio_tcp.TCP
 import zio.duration._
 import zio.stream.{ZSink, ZStream}
 import zio.{App, ExitCode, Schedule, URIO, ZHub, console}
